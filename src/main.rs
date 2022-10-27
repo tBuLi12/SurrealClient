@@ -1,18 +1,33 @@
 mod surreal_client;
 
-use std::collections::HashMap;
-
-use futures_util::{lock::Mutex, Stream};
+use rocket::{get, post, routes, State};
 use surreal_client::SurrealClient;
 
-static client: SurrealClient = SurrealClient::new();
-static d: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+type Db = State<SurrealClient>;
 
-#[tokio::main]
-async fn main() {
-    let mut connected = client.connect().await;
+#[get("/")]
+async fn hello(db: &Db) -> String {
+    db.query("SELECT * FROM dupa").await.to_string()
+}
 
-    connected.query("SELECT * FROM me");
+#[get("/add")]
+async fn add(db: &Db) -> String {
+    db.query("CREATE dupa:one SET name = 'sus'")
+        .await
+        .to_string()
+}
 
-    // println!("{:#?}", value);
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let client = SurrealClient::connect().await;
+
+    let _ = rocket::build()
+        .manage(client)
+        .mount("/", routes![hello, add])
+        .ignite()
+        .await?
+        .launch()
+        .await?;
+
+    Ok(())
 }
