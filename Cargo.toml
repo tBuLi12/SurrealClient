@@ -13,3 +13,10 @@ tokio-tungstenite = "0.17.2"
 serde_json = "1.0.87"
 serde = {version = "1.0.147", features = ["derive"]}
 tokio = { version = "1.21.2", features = ["full"] }
+deadpool = {version = "0.9.5", features = ["managed"]}
+rocket_db_pools = {version = "0.1.0-rc.2", features = ["deadpool"]}
+embedded_surreal = { path = "../EmbeddedSurreal" }
+
+[default.databases.main]
+url = "/path/to/database.sqlite"
+

@@ -1,33 +1,27 @@
 mod surreal_client;
 
-use rocket::{get, post, routes, State};
-use surreal_client::SurrealClient;
+use rocket::{get, routes};
+use rocket_db_pools::{Connection, Database};
+use surreal_client::sql;
 
-type Db = State<SurrealClient>;
+#[derive(Database)]
+#[database("main")]
+struct SurrealDb(surreal_client::Pool);
+type Db = Connection<SurrealDb>;
 
 #[get("/")]
-async fn hello(db: &Db) -> String {
-    db.query("SELECT * FROM dupa").await.to_string()
-}
-
-#[get("/add")]
-async fn add(db: &Db) -> String {
-    db.query("CREATE dupa:one SET name = 'sus'")
+async fn hello(db: Db) -> String {
+    let id = "eeeeeee";
+    let name = "meee";
+    sql!(SELECT ..User FROM dupa:{id} WHERE name = {name})
         .await
+        .unwrap()
         .to_string()
 }
 
-#[rocket::main]
-async fn main() -> Result<(), rocket::Error> {
-    let client = SurrealClient::connect().await;
-
-    let _ = rocket::build()
-        .manage(client)
-        .mount("/", routes![hello, add])
-        .ignite()
-        .await?
-        .launch()
-        .await?;
-
-    Ok(())
+#[rocket::launch]
+fn rocket() -> _ {
+    rocket::build()
+        .attach(SurrealDb::init())
+        .mount("/", routes![hello])
 }
